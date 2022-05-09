@@ -14,12 +14,14 @@ Juan Pablo Pineda */
 #include <string.h>
 #include <string>
 #include <pthread.h>
+#include "register.pb.h"
 
 using namespace std;
 using namespace google::protobuf;
 
-void main()
+int main()
 {
+
     struct user
     {
         string name;
@@ -102,7 +104,5 @@ void main()
     // Close the socket
     close(clientSocket);
  
-    return 0;
-
     return 0;
 }
