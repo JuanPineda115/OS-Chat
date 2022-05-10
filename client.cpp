@@ -6,8 +6,21 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <string>
+#include <stdio.h>
 
 using namespace std;
+
+void showMenu()
+{
+    printf( "Welcome to the chat room!\r\n");
+    printf( "1. Obtener usuarios conectados\r\n");
+    printf( "2. Mostrar información de un usuario\r\n");
+    printf( "3. Cambiar estatus\r\n");
+    printf( "4. Enviar un mensaje general\r\n");
+    printf( "5. Enviar un mensaje dierector\n");
+    printf( "6. Salir\r\n");
+}
+
 
 int main()
 {
@@ -41,6 +54,7 @@ int main()
 
     do {
         //		Enter lines of text
+        showMenu();
         cout << "> ";
         getline(cin, userInput);
 
@@ -71,3 +85,4 @@ int main()
 
     return 0;
 }
+
