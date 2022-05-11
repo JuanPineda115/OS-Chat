@@ -24,6 +24,15 @@ void showMenu()
     printf( "7. Salir\r\n");
 }
 
+void ListUsers(const chat::ConnectedUsers& connectedUsers){
+    for (int i=0; i<connectedUsers.users_size(); i++){
+        const chat::UserInformation& userinfo = connectedUsers.users(i);
+        cout << "Username: " << userinfo.username() << endl;
+        cout << "IP: " << userinfo.ip() << endl;
+        cout << "Estado: : " << userinfo.status() << endl;
+    }
+}
+
 
 int main()
 {
@@ -62,15 +71,11 @@ int main()
     //para opcion 3
     string status_option, new_status;
 
-    
-
     //para opcion 4
     string general_message;
 
     //para opcion 5
     string direct_message, direct_user;
-
-    
 
     //TODO: Hacer que el primer argumento sea el usuario
     string name;
@@ -86,8 +91,6 @@ int main()
     {
         ip = inet_ntoa(*(struct in_addr*)host->h_addr_list[0]);
     }
-
-
 
     chat::ClientRequest setUsername;
     setUsername.set_option(chat::ClientRequest_Option_USER_LOGIN);
@@ -114,12 +117,12 @@ int main()
 
     if(loginresponse.code() == chat::ServerResponse_Code_FAILED_OPERATION)
     {
-        printf("login Failed\n");
+        printf("No se pudo iniciar sesion\n");
         return 1;
     }
     else
     {
-        printf("login Successful\n");
+        printf("Sesion iniciada.\n");
     }
 
     do {
@@ -158,10 +161,10 @@ int main()
 
         if(userInput == "1"){
             //  Send the request to server
-            chat::ClientRequest allUsers;
-            allUsers.set_option(chat::ClientRequest_Option_CONNECTED_USERS);
+            chat::ClientRequest *allUsers = new chat::ClientRequest;
+            allUsers->set_option(chat::ClientRequest_Option_CONNECTED_USERS);
             std::string request_serial;
-            allUsers.SerializeToString(&request_serial);
+            allUsers->SerializeToString(&request_serial);
             strcpy(buf, request_serial.c_str());
             send(sock, request_serial.c_str(), request_serial.size(), 0);
             
@@ -169,19 +172,12 @@ int main()
             recv(sock, buf, 4096, 0);
             chat::ServerResponse respuesta;
             respuesta.ParseFromString(buf);
-            //cout << respuesta.code() << endl;
             cout << respuesta.DebugString() << '\n';
             if(respuesta.code() != chat::ServerResponse_Code_FAILED_OPERATION){
                 //  Print the users
                 printf("Usuarios conectados en el servidor: \n");
-                // for (int i = 0; i<respuesta.ConnectedUsers().size(); i++){
-                //     printf("%s ", respuesta.users().users());
-                // }
-                // for (chat:: thing : respuesta.users().users()){
-                //     cout << thing.name << endl;
-                // }
-                //for (int i = 0; i < respuesta.users)
-                std::cout << respuesta.DebugString() << '\n';
+                chat::ConnectedUsers activeUsers;
+                ListUsers(activeUsers);
             }
             else{
                 printf("Error en el servidor. \n");
@@ -235,12 +231,12 @@ int main()
                 response.ParseFromString(buf);
                 if(response.code() != chat::ServerResponse_Code_FAILED_OPERATION)
                 {
-                    printf("Status change Failed\n");
+                    printf("No se pudo cambiar el estado! \n");
                     return 1;
                 }
                 else
                 {
-                    printf("Status change was Successful\n");
+                    printf("Estado actualizado correctamente!\n");
                 }
                 
                 
