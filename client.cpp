@@ -30,7 +30,6 @@ int main()
     {
         return 1;
     }
-
     //	Create a hint structure for the server we're connecting with
     int port = 54000;
     string ipAddress = "127.0.0.1";
@@ -50,6 +49,53 @@ int main()
     //	While loop:
     char buf[4096];
     string userInput;
+    
+
+    //TODO: Hacer que el primer argumento sea el usuario
+    string name = "elpepexd";
+
+    //get the current ip address of the client and store it in a string
+    string ip = "";
+    char hostname[1024];
+    gethostname(hostname, 1024);
+    struct hostent *host = gethostbyname(hostname);
+    if (host)
+    {
+        ip = inet_ntoa(*(struct in_addr*)host->h_addr_list[0]);
+    }
+
+
+
+    chat::ClientRequest *setUsername = new chat::ClientRequest;
+    setUsername->set_option(chat::ClientRequest_Option_USER_LOGIN);
+
+    chat::UserRegistration *user = setUsername->mutable_user_registration();
+    user->set_username(name);
+    user->set_ip(ip);
+
+    std::string login_serialized;
+
+    setUsername->SerializeToString(&login_serialized);
+
+    strcpy(buf, login_serialized.c_str());
+    send(sock, buf, login_serialized.size()+1, 0);
+
+    //    Receive the response
+    int bytesReceived = recv(sock, buf, 4096, 0);
+
+    //TODO: Parse the response
+    chat::ServerResponse loginresponse;
+    loginresponse.ParseFromString(buf);
+
+    if(loginresponse.code() == chat::ServerResponse_Code_FAILED_OPERATION)
+    {
+        printf("login Failed\n");
+        return 1;
+    }
+    else
+    {
+        printf("login Successful\n");
+    }
 
 
     do {
