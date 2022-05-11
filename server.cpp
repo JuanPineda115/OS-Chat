@@ -55,6 +55,8 @@ void privateChat(string user, string name, string text){
     message -> set_text(text);
     message -> set_receiver(name);
     response.SerializeToString(&response_serialized);
+    response.set_option(chat::ServerResponse_Option_SEND_MESSAGE);
+    strcpy(buf, response_serialized.c_str());
     send(sock, buf, response_serialized.size()+1, 0);
 }
 // user -> Usuario que envia el mensaje
@@ -73,6 +75,8 @@ void generalChat(string user, string text){
         message -> set_receiver(userList[i].name);
         sock = userList[i].socket;
         response.SerializeToString(&response_serialized);
+        response.set_option(chat::ServerResponse_Option_SEND_MESSAGE);
+        strcpy(buf, response_serialized.c_str());
         send(sock, buf, response_serialized.size()+1, 0);
     }
 }
@@ -82,7 +86,7 @@ void generalChat(string user, string text){
 // text -> Mensaje
 void messageChat (chat::ClientRequest request){
     if (request.messg().receiver() == "all"){
-        generalChat(request.messg().text());
+        generalChat(request.messg().sender(), request.messg().text());
     } else {
         privateChat(request.messg().sender(),request.messg().receiver(), request.messg().text());
     }
@@ -108,21 +112,31 @@ void getUser(string user, string name){
     userRequest -> set_status(information.status);
     std::string response_serialized; 
     response.SerializeToString(&response_serialized);
+    response.set_option(chat::ServerResponse_Option_USER_INFORMATION);
+    strcpy(buf, response_serialized.c_str());
     send(sock, buf, response_serialized.size()+1, 0);
 }
 void changeStatus(string name, string status){
-    chat::ClientRequest request;
+    //chat::ClientRequest request;
     chat::ServerResponse response;
-    chat::ChangeStatus *estado = request.mutable_status();
+    //chat::ChangeStatus *estado = response.mutable_status();
     char buf[4096];
     int sock = userList[findUser(name)].socket;
+    response.mutable_status() -> set_status(status.c_str());
+    response.mutable_status() -> set_username(name.c_str());
     response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
-    estado -> set_status(status);
-    estado -> set_username(name);
-    userList[findUser(name)].status = status;
+    response.set_option(chat::ServerResponse_Option_STATUS_CHANGE);
+    
+    
+    
+    userList[findUser(name)].status = status.c_str();
+
+    printf("ELESTADO%s\n", status.c_str());
+
     std::string response_serialized; 
     response.SerializeToString(&response_serialized);
-    cout << userList[0].name << endl;
+    //cout << userList[0].name << endl;
+    strcpy(buf, response_serialized.c_str());
     send(sock, buf, response_serialized.size()+1, 0);
 }
 int init () {
@@ -137,7 +151,7 @@ int init () {
     // Bind the ip address and port to a socket
     sockaddr_in hint;
     hint.sin_family = AF_INET;
-    hint.sin_port = htons(54001);
+    hint.sin_port = htons(54002);
     inet_pton(AF_INET, "0.0.0.0", &hint.sin_addr);
  
     bind(listening, (sockaddr*)&hint, sizeof(hint));
@@ -209,7 +223,7 @@ void* clientConnection (void *args){
             cout << "Se escogio la opcion USER_INFORMATION" << endl;
         } else if (initrequest.option() == chat::ClientRequest_Option_STATUS_CHANGE){
             cout << "Se escogio la opcion STATUS_CHANGE" << endl;
-            changeStatus(initrequest.user().user(), initrequest.status().status());
+            changeStatus(initrequest.status().username(), initrequest.status().status());
         } else if (initrequest.option() == chat::ClientRequest_Option_SEND_MESSAGE){
             cout << "Se escogio la opcion SEND_MESSAGE" << endl;
             messageChat(initrequest);

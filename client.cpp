@@ -11,6 +11,70 @@
 
 using namespace std;
 
+int sock;
+
+/**
+if(loginresponse.code() == chat::ServerResponse_Code_FAILED_OPERATION)
+    {
+        printf("No se pudo iniciar sesion\n");
+        return 1;
+    } 
+ */
+
+void *listenToServer(void *args)
+{
+    while(1){
+
+            char response_buffer[4096];
+
+            chat :: ServerResponse response;
+            int *sock_con = (int *)args;
+            int bytesReceived = recv(*sock_con, response_buffer, 4096, 0);
+
+            response.ParseFromString(response_buffer);
+
+            // switch (response.option()) {
+            
+            // case chat::ServerResponse_Option_STATUS_CHANGE:
+            //     std::cout << "El usuario " << std::endl;
+            //     break;
+            // }
+            //TODO: Connected users
+            if(response.option() == chat::ServerResponse_Option_USER_INFORMATION)
+            {
+                if(response.code() == chat::ServerResponse_Code_FAILED_OPERATION)
+                {
+                    printf("No se pudo recuperar los datos del usuario\n");
+                }
+                else
+                {
+                    printf("\nUsuario: %s\n", response.user().username().c_str());
+                    printf("IP: %s\n", response.user().ip().c_str());
+                    printf("Estado: %s\n\n", response.user().status().c_str());
+                }
+            } 
+            else if(response.option() == chat::ServerResponse_Option_STATUS_CHANGE)
+            {
+                
+                if(response.code() == chat::ServerResponse_Code_FAILED_OPERATION)
+                {
+                    printf("No se pudo cambiar el estado del usuario\n");
+                }
+                else
+                {
+                     std::cout << response.DebugString() << std::endl;
+                    printf("\nEstado cambiado correctamente\n");
+                   
+                }
+                
+                
+            }
+
+
+
+    }
+}
+
 void showMenu()
 {
     printf("\n\n\n");
@@ -37,13 +101,13 @@ void ListUsers(const chat::ConnectedUsers& connectedUsers){
 int main()
 {
     //	Create a socket
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
     {
         return 1;
     }
     //	Create a hint structure for the server we're connecting with
-    int port = 54001;
+    int port = 54002;
     string ipAddress = "127.0.0.1";
 
     sockaddr_in hint;
@@ -124,6 +188,10 @@ int main()
     {
         printf("Sesion iniciada.\n");
     }
+    pthread_t tid;
+	pthread_attr_t attrs;
+	pthread_attr_init(&attrs);
+	pthread_create(&tid, &attrs, listenToServer, (void *)&sock);
 
     do {
         //		Enter lines of text
@@ -219,6 +287,7 @@ int main()
              chat::ClientRequest *server = new chat::ClientRequest;
                 server->set_option(chat::ClientRequest_Option_STATUS_CHANGE);
                 server->mutable_status() ->set_status(new_status);
+                server->mutable_status() ->set_username(name);
 
                 std::string serialized;
                 server->SerializeToString(&serialized);
@@ -226,18 +295,18 @@ int main()
                 strcpy(buf, serialized.c_str());
                 send(sock, buf, serialized.size()+1, 0);
 
-                recv(sock, buf, 4096, 0);
-                chat::ServerResponse response;
-                response.ParseFromString(buf);
-                if(response.code() != chat::ServerResponse_Code_FAILED_OPERATION)
-                {
-                    printf("No se pudo cambiar el estado! \n");
-                    return 1;
-                }
-                else
-                {
-                    printf("Estado actualizado correctamente!\n");
-                }
+                // recv(sock, buf, 4096, 0);
+                // chat::ServerResponse response;
+                // response.ParseFromString(buf);
+                // if(response.code() != chat::ServerResponse_Code_FAILED_OPERATION)
+                // {
+                //     printf("No se pudo cambiar el estado! \n");
+                //     return 1;
+                // }
+                // else
+                // {
+                //     printf("Estado actualizado correctamente!\n");
+                // }
                 
                 
 
