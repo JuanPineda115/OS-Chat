@@ -52,11 +52,11 @@ message ConnectedUsers {
 message ClientRequest {
 enum Option
 {
-    USER_LOGIN = 0;
-    CONNECTED_USERS = 1;
-    USER_INFORMATION = 2;
-    STATUS_CHANGE = 3;
-    SEND_MESSAGE = 4;
+    USER_LOGIN = 1;
+    CONNECTED_USERS = 2;
+    USER_INFORMATION = 3;
+    STATUS_CHANGE = 4;
+    SEND_MESSAGE = 5;
 }
     optional Option option = 1;
     optional UserRegistration newuser = 2;
@@ -74,17 +74,17 @@ enum Option
 message ServerResponse {
     enum Option
     {
-        USER_LOGIN = 0;
-        CONNECTED_USERS = 1;
-        USER_INFORMATION = 2;
-        STATUS_CHANGE = 3;
-        SEND_MESSAGE = 4;
+        USER_LOGIN = 1;
+        CONNECTED_USERS = 2;
+        USER_INFORMATION = 3;
+        STATUS_CHANGE = 4;
+        SEND_MESSAGE = 5;
     }
     optional Option option = 1;
     enum Code
     {
-        FAILED_OPERATION = 0;
-        SUCCESSFUL_OPERATION = 1;
+        FAILED_OPERATION = 1;
+        SUCCESSFUL_OPERATION = 2;
     }
         optional Code code = 2;
         optional string response = 3;

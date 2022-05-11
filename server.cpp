@@ -51,7 +51,7 @@ void connectedUsers(string name,string receiver, string message){
     mesg.set_sender(name);
     mesg.set_text(message);
     response.set_option(chat::ServerResponse_Option_SEND_MESSAGE);
-    response.set_allocated_messg(mesg);
+    //response.set_allocated_messg(mesg);
     int userIndex = findUser(receiver);
     int clientSocket = userList[userIndex].socket;
     //send(clientSocket, response, sizeof(response), 0);
@@ -69,7 +69,7 @@ int init () {
     // Bind the ip address and port to a socket
     sockaddr_in hint;
     hint.sin_family = AF_INET;
-    hint.sin_port = htons(54000);
+    hint.sin_port = htons(54001);
     inet_pton(AF_INET, "0.0.0.0", &hint.sin_addr);
  
     bind(listening, (sockaddr*)&hint, sizeof(hint));
@@ -105,6 +105,9 @@ void* clientConnection (void *args){
     //chat::ClientRequest initrequest = (chat::ClientRequest) bufClient;
     initrequest.ParseFromString(bufClient);
     // printf("%s\n", initrequest.newuser().username());
+    std::cout << "Servidor: se recibió informacion de: "
+                      << initrequest.newuser().username()
+                      << std::endl;
     std::cout << "Servidor: se recibió informacion de: "
                       << initrequest.newuser().username()
                       << std::endl;

@@ -32,7 +32,7 @@ int main()
         return 1;
     }
     //	Create a hint structure for the server we're connecting with
-    int port = 54000;
+    int port = 54001;
     string ipAddress = "127.0.0.1";
 
     sockaddr_in hint;
@@ -67,22 +67,22 @@ int main()
 
 
 
-    // chat::ClientRequest setUsername;
-    // setUsername.set_option(chat::ClientRequest_Option_USER_LOGIN);
+    chat::ClientRequest setUsername;
+    setUsername.set_option(chat::ClientRequest_Option_USER_LOGIN);
 
     // chat::UserRegistration* user = setUsername.mutable_newuser();
     // user->set_username("elpepon xd");
-    // // user->set_ip("127.1.1.1");
-    // setUsername.mutable_newuser() ->set_username("elpepon xd");
-    // setUsername.mutable_newuser() ->set_ip("127.1.1.1");
+    // user->set_ip("127.1.1.1");
+    setUsername.mutable_newuser() ->set_username("elpepon xd");
+    setUsername.mutable_newuser() ->set_ip("127.1.1.1");
 
-    // std::string login_serialized; 
-    // setUsername.SerializeToString(&login_serialized);
+    std::string login_serialized; 
+    setUsername.SerializeToString(&login_serialized);
 
     //setUsername.SerializeToString(&login_serialized);
 
-    //strcpy(buf, login_serialized.c_str());
-    // send(sock, login_serialized.c_str(), login_serialized.size(), 0);
+    strcpy(buf, login_serialized.c_str());
+    send(sock, login_serialized.c_str(), login_serialized.size(), 0);
 
     //    Receive the response
     // recv(sock, buf, 4096, 0);
