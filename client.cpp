@@ -20,7 +20,8 @@ void showMenu()
     printf( "3. Cambiar estatus\r\n");
     printf( "4. Enviar un mensaje general\r\n");
     printf( "5. Enviar un mensaje directo\n");
-    printf( "6. Salir\r\n");
+    printf( "6. Ver mensajes del chat\n");
+    printf( "7. Salir\r\n");
 }
 
 
@@ -33,7 +34,7 @@ int main()
         return 1;
     }
     //	Create a hint structure for the server we're connecting with
-    int port = 54001;
+    int port = 54002;
     string ipAddress = "127.0.0.1";
 
     sockaddr_in hint;
@@ -60,6 +61,10 @@ int main()
 
     //para opcion 4
     string general_message;
+
+    //para opcion 5
+    string direct_message, direct_user;
+
     
 
     //TODO: Hacer que el primer argumento sea el usuario
@@ -94,7 +99,7 @@ int main()
     //setUsername.SerializeToString(&login_serialized);
 
     strcpy(buf, login_serialized.c_str());
-    send(sock, login_serialized.c_str(), login_serialized.size(), 0);
+    send(sock, buf, login_serialized.size()+1, 0);
 
     //    Receive the response
     recv(sock, buf, 4096, 0);
@@ -114,6 +119,7 @@ int main()
 
     do {
         //		Enter lines of text
+        cin.ignore();
         showMenu();
         cout << "> ";
         getline(cin, userInput);
@@ -207,10 +213,9 @@ int main()
                 server->SerializeToString(&serialized);
 
                 strcpy(buf, serialized.c_str());
-                send(sock, serialized.c_str(), serialized.size()+1, 0);
+                send(sock, buf, serialized.size()+1, 0);
 
                 recv(sock, buf, 4096, 0);
-
                 chat::ServerResponse response;
                 response.ParseFromString(buf);
                 if(response.code() != chat::ServerResponse_Code_FAILED_OPERATION)
@@ -250,8 +255,32 @@ int main()
             
             
         }  
+        else if(userInput == "5"){
+            direct_message = "";
+
+
+            printf("\nIngrese el nombre del usuario al que desea mandar mensaje: ");
+            cin >> direct_user;
+            printf("\nIngrese el mensaje a mandar: ");
+            cin >> direct_message;
+
+            chat::ClientRequest *server = new chat::ClientRequest;
+            server->set_option(chat::ClientRequest_Option_SEND_MESSAGE); 
+
+            chat::Message* new_message = server->mutable_messg();
+            new_message->set_receiver(direct_user);
+            new_message->set_sender(name);
+            new_message->set_text(direct_message);
+
+            std::string serialized;
+            server->SerializeToString(&serialized);
+
+            strcpy(buf, serialized.c_str());
+            send(sock, buf, serialized.size()+1, 0);
+
+        }
         
-    } while(true);
+    } while(userInput != "7");
 
     //	Close the socket
     close(sock);
