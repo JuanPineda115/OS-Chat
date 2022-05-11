@@ -258,6 +258,7 @@ int main()
             cin >> user_info;
             chat::ClientRequest *server = new chat::ClientRequest();
             server->set_option(chat::ClientRequest_Option_USER_INFORMATION);
+            server->mutable_user() ->set_user(user_info);
 
             std::string serialized;
             server->SerializeToString(&serialized);

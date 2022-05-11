@@ -99,20 +99,22 @@ void messageChat (chat::ClientRequest request){
     chat::UserInformation *information = connectedRequest -> mutable_users();
 } */
 // user -> Usuario a quien buscar
-// name -> Usuario quien busca la informacion
-void getUser(string user, string name){
-    chat::ClientRequest request;
+// sock -> Socket del usuario que hizo la peticion
+void getUser(string user, int sock){
+    //chat::ClientRequest request;
     chat::ServerResponse response;
     chat::UserInformation *userRequest = response.mutable_user();
     char buf[4096];
-    int sock = userList[findUser(name)].socket;
     userInformation information = userList[findUser(user)];
     userRequest -> set_username(information.name);
     userRequest -> set_ip(information.ip);
     userRequest -> set_status(information.status);
+    response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
+    response.set_option(chat::ServerResponse_Option_USER_INFORMATION);
+    
     std::string response_serialized; 
     response.SerializeToString(&response_serialized);
-    response.set_option(chat::ServerResponse_Option_USER_INFORMATION);
+    
     strcpy(buf, response_serialized.c_str());
     send(sock, buf, response_serialized.size()+1, 0);
 }
@@ -221,6 +223,9 @@ void* clientConnection (void *args){
             cout << "Se escogio la opcion CONNECTED_USERS" << endl;
         } else if (initrequest.option() == chat::ClientRequest_Option_USER_INFORMATION){
             cout << "Se escogio la opcion USER_INFORMATION" << endl;
+            getUser(initrequest.user().user().c_str(), user -> socket);
+
+
         } else if (initrequest.option() == chat::ClientRequest_Option_STATUS_CHANGE){
             cout << "Se escogio la opcion STATUS_CHANGE" << endl;
             changeStatus(initrequest.status().username(), initrequest.status().status());
