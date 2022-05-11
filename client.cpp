@@ -57,7 +57,12 @@ int main()
     string option;
 
     //para opcion 2
+    string user_info;
+
+    //para opcion 3
     string status_option, new_status;
+
+    
 
     //para opcion 4
     string general_message;
@@ -184,8 +189,17 @@ int main()
 
         }        
         else if(userInput == "2"){
-
+            user_info="";
             printf("Ingrese el nombre del usuario para saber su informacion: ");
+            cin >> user_info;
+            chat::ClientRequest *server = new chat::ClientRequest();
+            server->set_option(chat::ClientRequest_Option_USER_INFORMATION);
+
+            std::string serialized;
+            server->SerializeToString(&serialized);
+            strcpy(buf, serialized.c_str());
+            send(sock, buf, serialized.size()+1, 0);
+
             
             
         }              
