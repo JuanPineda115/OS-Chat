@@ -7,6 +7,7 @@
 #include <string.h>
 #include <string>
 #include <stdio.h>
+#include "register.pb.h"
 
 using namespace std;
 
@@ -17,7 +18,7 @@ void showMenu()
     printf( "2. Mostrar información de un usuario\r\n");
     printf( "3. Cambiar estatus\r\n");
     printf( "4. Enviar un mensaje general\r\n");
-    printf( "5. Enviar un mensaje dierector\n");
+    printf( "5. Enviar un mensaje directo\n");
     printf( "6. Salir\r\n");
 }
 
@@ -66,36 +67,38 @@ int main()
 
 
 
-    chat::ClientRequest *setUsername = new chat::ClientRequest;
-    setUsername->set_option(chat::ClientRequest_Option_USER_LOGIN);
+    // chat::ClientRequest setUsername;
+    // setUsername.set_option(chat::ClientRequest_Option_USER_LOGIN);
 
-    chat::UserRegistration *user = setUsername->mutable_user_registration();
-    user->set_username(name);
-    user->set_ip(ip);
+    // chat::UserRegistration* user = setUsername.mutable_newuser();
+    // user->set_username("elpepon xd");
+    // // user->set_ip("127.1.1.1");
+    // setUsername.mutable_newuser() ->set_username("elpepon xd");
+    // setUsername.mutable_newuser() ->set_ip("127.1.1.1");
 
-    std::string login_serialized;
+    // std::string login_serialized; 
+    // setUsername.SerializeToString(&login_serialized);
 
-    setUsername->SerializeToString(&login_serialized);
+    //setUsername.SerializeToString(&login_serialized);
 
-    strcpy(buf, login_serialized.c_str());
-    send(sock, buf, login_serialized.size()+1, 0);
+    //strcpy(buf, login_serialized.c_str());
+    // send(sock, login_serialized.c_str(), login_serialized.size(), 0);
 
     //    Receive the response
-    int bytesReceived = recv(sock, buf, 4096, 0);
+    // recv(sock, buf, 4096, 0);
 
-    //TODO: Parse the response
-    chat::ServerResponse loginresponse;
-    loginresponse.ParseFromString(buf);
+    // chat::ServerResponse loginresponse;
+    // loginresponse.ParseFromString(buf);
 
-    if(loginresponse.code() == chat::ServerResponse_Code_FAILED_OPERATION)
-    {
-        printf("login Failed\n");
-        return 1;
-    }
-    else
-    {
-        printf("login Successful\n");
-    }
+    // if(loginresponse.code() == chat::ServerResponse_Code_FAILED_OPERATION)
+    // {
+    //     printf("login Failed\n");
+    //     return 1;
+    // }
+    // else
+    // {
+    //     printf("login Successful\n");
+    // }
 
 
     do {

@@ -15,6 +15,8 @@ Juan Pablo Pineda */
 #include <string>
 #include <pthread.h>
 #include "register.pb.h"
+#include <stdio.h>
+
 
 using namespace std;
 using namespace google::protobuf;
@@ -24,8 +26,36 @@ struct userInformation
         int socket;
         string ip;
         string status;
+        sockaddr_in client;
     };
 pthread_t tid;
+std::vector<userInformation> userList;
+bool run = true;
+
+// Esta funcion servira para cuando querramos buscar un usuario especifico dentro de la lista de usuarios
+int findUser(string name){
+    for (int i = 0; i<userList.size(); i++){
+        if (userList[i].name == name){
+            //cout << "El usuario se encuentra en la posicion " << i << endl;
+            return i;
+        }
+    }
+}
+// name -> El usuario que manda el mensaje
+// receiver -> El usuario que recibe el mensaje
+// message -> Mensaje que se envia
+void connectedUsers(string name,string receiver, string message){
+    chat::ServerResponse response;
+    chat::Message mesg;
+    mesg.set_receiver(receiver);
+    mesg.set_sender(name);
+    mesg.set_text(message);
+    response.set_option(chat::ServerResponse_Option_SEND_MESSAGE);
+    response.set_allocated_messg(mesg);
+    int userIndex = findUser(receiver);
+    int clientSocket = userList[userIndex].socket;
+    //send(clientSocket, response, sizeof(response), 0);
+}
 
 int init () {
      // Create a socket
@@ -50,14 +80,17 @@ int init () {
 }
 
 void* clientConnection (void *args){
-    int clientSocket = (int) args;
+    struct userInformation *user = (struct userInformation*) args;
+    struct userInformation userUpdated;
+    int clientSocket = user -> socket;
+    sockaddr_in client = user -> client;
     char host[NI_MAXHOST];      // Client's remote name
     char service[NI_MAXSERV];   // Service (i.e. port) the client is connect on
+    char bufClient[8192];
  
     memset(host, 0, NI_MAXHOST); // same as memset(host, 0, NI_MAXHOST);
     memset(service, 0, NI_MAXSERV);
- 
-    /* if (getnameinfo((sockaddr*)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
+    if (getnameinfo((sockaddr*)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
     {
         cout << host << " connected on port " << service << endl;
     }
@@ -65,19 +98,51 @@ void* clientConnection (void *args){
     {
         inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
         cout << host << " connected on port " << ntohs(client.sin_port) << endl;
-    } */
- 
+    }
+    recv(clientSocket, bufClient, 8192, 0);
+    chat::ClientRequest initrequest;
+    //initrequest = (ClientRequest)bufClient;
+    //chat::ClientRequest initrequest = (chat::ClientRequest) bufClient;
+    initrequest.ParseFromString(bufClient);
+    // printf("%s\n", initrequest.newuser().username());
+    std::cout << "Servidor: se recibió informacion de: "
+                      << initrequest.newuser().username()
+                      << std::endl;
+
+    //std::find(userList.begin(), userList.end(), "Prueba")
+    userUpdated.ip = host;
+    userUpdated.socket = user -> socket;
+    userUpdated.client = user -> client;
+    // TODO colocarle el nombre del usuario
+    chat::ClientRequest testRequest;    //Esta variable la voy a usar solo para hacer pruebas
+    userUpdated.name = userUpdated.socket;
+    userList.push_back(userUpdated);
+    cout << userUpdated.name << endl;
+    testRequest.set_option(chat::ClientRequest_Option_USER_INFORMATION);
+
+    if (testRequest.option() == chat::ClientRequest_Option_CONNECTED_USERS){
+        cout << "Se escogio la opcion CONNECTED_USERS" << endl;
+    } else if (testRequest.option() == chat::ClientRequest_Option_USER_INFORMATION){
+        cout << "Se escogio la opcion USER_INFORMATION" << endl;
+    } else if (testRequest.option() == chat::ClientRequest_Option_STATUS_CHANGE){
+        cout << "Se escogio la opcion STATUS_CHANGE" << endl;
+    } else if (testRequest.option() == chat::ClientRequest_Option_SEND_MESSAGE){
+        cout << "Se escogio la opcion SEND_MESSAGE" << endl;
+    } else if (testRequest.option() == chat::ClientRequest_Option_USER_LOGIN){
+        cout << "Se escogio la opcion USER_LOGIN" << endl;
+    }
     // Close listening socket
     // close(listening);
- 
+
     // While loop: accept and echo message back to client
     char buf[4096];
     while (true)
     {
         memset(buf, 0, 4096);
- 
+
         // Wait for client to send data
         int bytesReceived = recv(clientSocket, buf, 4096, 0);
+        
         if (bytesReceived == -1)
         {
             cerr << "Error in recv(). Quitting" << endl;
@@ -87,6 +152,7 @@ void* clientConnection (void *args){
         if (bytesReceived == 0)
         {
             cout << "Client disconnected " << endl;
+            run = false;
             break;
         }
         // TODO cambiar esto para que solo se lo cierre del lado del cliente y hacer uno para cerrar el servidor
@@ -96,7 +162,7 @@ void* clientConnection (void *args){
         }
 
         // TODO cambiar esto para que muestre el nombre de cada usuario
-        cout << host<< "> " <<string(buf, 0, bytesReceived) << endl;     //Aqui se muestra el mensaje que mando el usuario
+        cout << userUpdated.name<< "> " <<string(buf, 0, bytesReceived) << endl;     //Aqui se muestra el mensaje que mando el usuario
  
         // Echo message back to client
         send(clientSocket, buf, bytesReceived + 1, 0);
@@ -114,25 +180,14 @@ int main()
     sockaddr_in client;
     socklen_t clientSize = sizeof(client);
     string userInput;
+    userInformation user;
     int number = 2;
-    bool run = true;
     int rc;
-    //while (run){
-    //    cout << "Haciendo pruebas" << endl;
-    //    getline(cin, userInput);
-    //    if (userInput == "exit"){
-    //        return 0;
-    //    }
-    //    rc = pthread_create(&tid, NULL, clientConnection,nullptr);
-    //    if(rc == 0)			/* could not create thread */
-    //    {
-    //        printf("\n ERROR: return code from pthread_create is %d \n", rc);
-    //        exit(1);
-    //    }  
-    //}
     while (run){
         int clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
-        pthread_create(&tid, NULL, clientConnection,(void *)clientSocket);
+        user.socket = clientSocket;
+        user.client = client;
+        pthread_create(&tid, NULL, clientConnection,(void *)&user);
         cout << "Se ha conectado un nuevo usuario" << endl;
     }
  
