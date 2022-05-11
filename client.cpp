@@ -7,11 +7,13 @@
 #include <string.h>
 #include <string>
 #include <stdio.h>
+#include <vector>
 #include "register.pb.h"
 
 using namespace std;
 
 int sock;
+std::vector<std::string> chat_history;
 
 /**
 if(loginresponse.code() == chat::ServerResponse_Code_FAILED_OPERATION)
@@ -79,7 +81,15 @@ void *listenToServer(void *args)
                 }
                 else
                 {
-                    printf("\nMensaje: %s\n", response.messg().text().c_str());
+                    if(response.messg().receiver().c_str() == "all"){
+                        printf("\n%s@general: %s\n", response.messg().sender().c_str(), response.messg().text().c_str());
+                        chat_history.push_back(response.messg().sender().c_str()+"@general: "+response.messg().text().c_str());
+
+                    }else{
+                        printf("\n%s@private: %s\n", response.messg().sender().c_str(), response.messg().text().c_str());
+                        chat_history.push_back(response.messg().sender().c_str()+"@general: "+response.messg().text().c_str());
+                    
+                    }
                    
                 }
                 
@@ -375,6 +385,12 @@ int main()
             strcpy(buf, serialized.c_str());
             send(sock, buf, serialized.size()+1, 0);
 
+        }
+
+        else if(userInput == "5"){
+            int sizevec = chat_history.size();
+            for (int i = 0; i < sizevec ; i++)
+            std::cout << chat_history[i] << "\n";
         }
         
     } while(userInput != "7");
