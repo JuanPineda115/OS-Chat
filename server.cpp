@@ -44,7 +44,7 @@ int findUser(string name){
 // name -> El usuario que manda el mensaje
 // receiver -> El usuario que recibe el mensaje
 // message -> Mensaje que se envia
-void connectedUsers(string name,string receiver, string message){
+/* void sendMessageUsers(string name,string receiver, string message){
     chat::ServerResponse response;
     chat::Message mesg;
     mesg.set_receiver(receiver);
@@ -55,8 +55,43 @@ void connectedUsers(string name,string receiver, string message){
     int userIndex = findUser(receiver);
     int clientSocket = userList[userIndex].socket;
     //send(clientSocket, response, sizeof(response), 0);
-}
+} */
+// name -> El nombre del usuario que se desea buscar
+/* void informationUser(string name){
+    chat::ServerResponse response;
+    chat::UserInformation information;
+    userInformation user = userList[findUser(name)];
+    information.set_ip(user.ip);
+    information.set_username(user.name);
+    information.set_status(user.status);
 
+    response.set_option(chat::ServerResponse_Option_USER_INFORMATION);
+    response.set_allocated_users(information);
+    std::string information_serialized; 
+    response.SerializeToString(&information_serialized);
+    send(user.socket, information_serialized.c_str(), information_serialized.size(), 0);
+} */
+// name -> usuario que hace la solicitud
+void connectedUsers(string name){
+    chat::ServerResponse response;
+    chat::ConnectedUsers connectedUsers;
+    chat::UserInformation information;
+    userInformation users;
+    //int sock = userList[findUser(name)].socket;
+    for (int i = 0; i<userList.size(); i++){
+        information.set_username(userList[i].name);
+        information.set_ip(userList[i].ip);
+        information.set_status(userList[i].status);
+        //connectedUsers.add_users(information);
+    }
+    //response.set_allocated_users(connectedUsers);
+    // response.set_allocated_users("Orlando");
+    response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
+    std::string response_serialized; 
+    response.SerializeToString(&response_serialized);
+    //strcpy(buf, response_serialized.c_str());
+    //send(sock, response_serialized.c_str(), response_serialized.size(), 0);
+}
 int init () {
      // Create a socket
     int listening = socket(AF_INET, SOCK_STREAM, 0);
@@ -78,10 +113,13 @@ int init () {
     listen(listening, SOMAXCONN);
     return listening;
 }
+// name -> Usuario a quien se le cambiara el estado
+
 
 void* clientConnection (void *args){
     struct userInformation *user = (struct userInformation*) args;
     struct userInformation userUpdated;
+    chat::ServerResponse response;
     int clientSocket = user -> socket;
     sockaddr_in client = user -> client;
     char host[NI_MAXHOST];      // Client's remote name
@@ -99,47 +137,55 @@ void* clientConnection (void *args){
         inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
         cout << host << " connected on port " << ntohs(client.sin_port) << endl;
     }
-    recv(clientSocket, bufClient, 8192, 0);
-    chat::ClientRequest initrequest;
-    //initrequest = (ClientRequest)bufClient;
-    //chat::ClientRequest initrequest = (chat::ClientRequest) bufClient;
-    initrequest.ParseFromString(bufClient);
-    // printf("%s\n", initrequest.newuser().username());
-    std::cout << "Servidor: se recibió informacion de: "
-                      << initrequest.newuser().username()
-                      << std::endl;
-    std::cout << "Servidor: se recibió informacion de: "
-                      << initrequest.newuser().username()
-                      << std::endl;
+    while (true){
+        if (recv(clientSocket, bufClient, 8192, 0) > 0){
+            response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
+        } else {
+            response.set_code(chat::ServerResponse_Code_FAILED_OPERATION);
+        }
+        std::string response_serialized; 
+        response.SerializeToString(&response_serialized);
+        send(clientSocket, response_serialized.c_str(), response_serialized.size(), 0);
+        chat::ClientRequest initrequest;
+        //initrequest = (ClientRequest)bufClient;
+        //chat::ClientRequest initrequest = (chat::ClientRequest) bufClient;
+        initrequest.ParseFromString(bufClient);
+        // printf("%s\n", initrequest.newuser().username());
+        std::cout << "Servidor: se recibió informacion de: "
+                        << initrequest.newuser().username()
+                        << std::endl;
 
-    //std::find(userList.begin(), userList.end(), "Prueba")
-    userUpdated.ip = host;
-    userUpdated.socket = user -> socket;
-    userUpdated.client = user -> client;
-    // TODO colocarle el nombre del usuario
-    chat::ClientRequest testRequest;    //Esta variable la voy a usar solo para hacer pruebas
-    userUpdated.name = userUpdated.socket;
-    userList.push_back(userUpdated);
-    cout << userUpdated.name << endl;
-    testRequest.set_option(chat::ClientRequest_Option_USER_INFORMATION);
-
-    if (testRequest.option() == chat::ClientRequest_Option_CONNECTED_USERS){
-        cout << "Se escogio la opcion CONNECTED_USERS" << endl;
-    } else if (testRequest.option() == chat::ClientRequest_Option_USER_INFORMATION){
-        cout << "Se escogio la opcion USER_INFORMATION" << endl;
-    } else if (testRequest.option() == chat::ClientRequest_Option_STATUS_CHANGE){
-        cout << "Se escogio la opcion STATUS_CHANGE" << endl;
-    } else if (testRequest.option() == chat::ClientRequest_Option_SEND_MESSAGE){
-        cout << "Se escogio la opcion SEND_MESSAGE" << endl;
-    } else if (testRequest.option() == chat::ClientRequest_Option_USER_LOGIN){
-        cout << "Se escogio la opcion USER_LOGIN" << endl;
+        //std::find(userList.begin(), userList.end(), "Prueba")
+        userUpdated.ip = initrequest.newuser().ip();
+        userUpdated.socket = user -> socket;
+        userUpdated.client = user -> client;
+        // TODO colocarle el nombre del usuario
+        chat::ClientRequest testRequest;    //Esta variable la voy a usar solo para hacer pruebas
+        //userUpdated.name = initrequest.newuser().username();
+        //userList.push_back(userUpdated);
+        //cout <<initrequest.newuser().username()<<"@"<<userUpdated.ip << endl;
+        cout << initrequest.option() << endl;
+        if (initrequest.option() == chat::ClientRequest_Option_CONNECTED_USERS){
+            cout << "Se escogio la opcion CONNECTED_USERS" << endl;
+            //connectedUsers(initrequest.user().user());
+        } else if (initrequest.option() == chat::ClientRequest_Option_USER_INFORMATION){
+            cout << "Se escogio la opcion USER_INFORMATION" << endl;
+            //informationUser(initrequest.user().user());
+        } else if (initrequest.option() == chat::ClientRequest_Option_STATUS_CHANGE){
+            cout << "Se escogio la opcion STATUS_CHANGE" << endl;
+            recv(clientSocket, bufClient, 8192, 0);
+        } else if (initrequest.option() == chat::ClientRequest_Option_SEND_MESSAGE){
+            cout << "Se escogio la opcion SEND_MESSAGE" << endl;
+        } else if (initrequest.option() == chat::ClientRequest_Option_USER_LOGIN){
+            cout << "Se escogio la opcion USER_LOGIN" << endl;
+        }
     }
     // Close listening socket
     // close(listening);
 
     // While loop: accept and echo message back to client
-    char buf[4096];
-    while (true)
+    //char buf[4096];
+    /* while (true)
     {
         memset(buf, 0, 4096);
 
@@ -164,15 +210,14 @@ void* clientConnection (void *args){
             close(clientSocket);
         }
 
-        // TODO cambiar esto para que muestre el nombre de cada usuario
-        cout << userUpdated.name<< "> " <<string(buf, 0, bytesReceived) << endl;     //Aqui se muestra el mensaje que mando el usuario
+        cout << initrequest.newuser().username()<<"@"<<userUpdated.ip <<"> " <<string(buf, 0, bytesReceived) << endl;     //Aqui se muestra el mensaje que mando el usuario
  
         // Echo message back to client
         send(clientSocket, buf, bytesReceived + 1, 0);
     }
  
     // Close the socket
-    close(clientSocket);
+    close(clientSocket); */
 }   
 
 int main()
