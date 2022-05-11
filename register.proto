@@ -44,11 +44,11 @@ message ConnectedUsers {
 }
 
 // Solicitud de cliente
-// option (0) = Registro de usuario
-// option (1) = Listado de usuarios conectados
-// option (2) = Información de usuario
-// option (3) = Cambio de estado
-// option (4) = mensaje
+// option (1) = Registro de usuario
+// option (2) = Listado de usuarios conectados
+// option (3) = Información de usuario
+// option (4) = Cambio de estado
+// option (5) = mensaje
 message ClientRequest {
 enum Option
 {
@@ -66,11 +66,11 @@ enum Option
 }
 
 // Respuesta del servidor
-// option (0) = Registro de usuario
-// option (1) = Listado de usuarios conectados
-// option (2) = Información de usuario
-// option (3) = Cambio de estado
-// option (4) = mensaje
+// option (1) = Registro de usuario
+// option (2) = Listado de usuarios conectados
+// option (3) = Información de usuario
+// option (4) = Cambio de estado
+// option (5) = mensaje
 message ServerResponse {
     enum Option
     {
