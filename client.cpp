@@ -34,7 +34,7 @@ int main()
         return 1;
     }
     //	Create a hint structure for the server we're connecting with
-    int port = 54002;
+    int port = 54001;
     string ipAddress = "127.0.0.1";
 
     sockaddr_in hint;
@@ -184,6 +184,7 @@ int main()
 
         }        
         else if(userInput == "2"){
+
             printf("Ingrese el nombre del usuario para saber su informacion: ");
             
             
