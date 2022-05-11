@@ -70,6 +70,22 @@ void *listenToServer(void *args)
                 
             }
 
+            else if(response.option() == chat::ServerResponse_Option_SEND_MESSAGE)
+            {
+                
+                if(response.code() == chat::ServerResponse_Code_FAILED_OPERATION)
+                {
+                    printf("No se pudo recibir mensaje\n");
+                }
+                else
+                {
+                    printf("\nMensaje: %s\n", response.messg().text().c_str());
+                   
+                }
+                
+                
+            }
+
 
 
     }
@@ -107,7 +123,7 @@ int main()
         return 1;
     }
     //	Create a hint structure for the server we're connecting with
-    int port = 54002;
+    int port = 54003;
     string ipAddress = "127.0.0.1";
 
     sockaddr_in hint;
@@ -244,7 +260,7 @@ int main()
             if(respuesta.code() != chat::ServerResponse_Code_FAILED_OPERATION){
                 //  Print the users
                 printf("Usuarios conectados en el servidor: \n");
-                chat::ConnectedUsers activeUsers;
+                chat::ConnectedUsers activeUsers = respuesta.users();
                 ListUsers(activeUsers);
             }
             else{

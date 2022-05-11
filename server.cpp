@@ -28,7 +28,7 @@ struct userInformation
         string status;
         sockaddr_in client;
     };
-pthread_t tid;
+
 std::vector<userInformation> userList;
 bool run = true;
 
@@ -46,18 +46,23 @@ int findUser(string name){
 // TODO probar
 void privateChat(string user, string name, string text){
     chat::ServerResponse response;
-    chat::ClientRequest request;
-    chat::Message *message = response.mutable_messg();
-    std::string response_serialized; 
+    //chat::ClientRequest request;
+    chat::Message *message = response.mutable_messg(); 
     char buf[4096];
-    int sock = userList[findUser(name)].socket;;
+    int sock_dest = userList[findUser(name)].socket;
     message -> set_sender(user);
     message -> set_text(text);
     message -> set_receiver(name);
-    response.SerializeToString(&response_serialized);
     response.set_option(chat::ServerResponse_Option_SEND_MESSAGE);
+    response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
+
+    std::string response_serialized;
+    response.SerializeToString(&response_serialized);
+
+    
+
     strcpy(buf, response_serialized.c_str());
-    send(sock, buf, response_serialized.size()+1, 0);
+    send(sock_dest, buf, response_serialized.size()+1, 0);
 }
 // user -> Usuario que envia el mensaje
 // text -> El mensaje que se envio
@@ -76,6 +81,7 @@ void generalChat(string user, string text){
         sock = userList[i].socket;
         response.SerializeToString(&response_serialized);
         response.set_option(chat::ServerResponse_Option_SEND_MESSAGE);
+        response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
         strcpy(buf, response_serialized.c_str());
         send(sock, buf, response_serialized.size()+1, 0);
     }
@@ -85,19 +91,35 @@ void generalChat(string user, string text){
 // name -> Usuario quien envio el mensaje
 // text -> Mensaje
 void messageChat (chat::ClientRequest request){
-    if (request.messg().receiver() == "all"){
+    if (request.messg().receiver().c_str() == "all"){
         generalChat(request.messg().sender(), request.messg().text());
     } else {
         privateChat(request.messg().sender(),request.messg().receiver(), request.messg().text());
     }
 }
 // TODO
-/* void connectedUsers(){
-    chat::ClientRequest request;
+void connectedUsers(int sock){
     chat::ServerResponse response;
-    chat::ConnectedUsers *connectedRequest = response.mutable_users();
-    chat::UserInformation *information = connectedRequest -> mutable_users();
-} */
+    chat::ClientRequest request;
+    std::string response_serialized;
+    char buf[4096];
+if(request.user().has_user() != true){
+        response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
+        chat::ConnectedUsers *allUsers = new chat::ConnectedUsers();
+        for (auto item = userList.begin(); item!=userList.end(); item++){
+            chat::UserInformation * user = allUsers->add_users();
+            user->set_username(item->name);
+            user->set_ip(item->ip);
+            user->set_status(item->status);
+        }
+        response.Clear();
+        response.set_option(response.CONNECTED_USERS);
+        response.set_allocated_users(allUsers);
+        response.SerializeToString(&response_serialized);
+        strcpy(buf, response_serialized.c_str());
+        send(sock, buf, response_serialized.size() + 1, 0);
+    }
+}
 // user -> Usuario a quien buscar
 // sock -> Socket del usuario que hizo la peticion
 void getUser(string user, int sock){
@@ -111,7 +133,7 @@ void getUser(string user, int sock){
     userRequest -> set_status(information.status);
     response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
     response.set_option(chat::ServerResponse_Option_USER_INFORMATION);
-    
+
     std::string response_serialized; 
     response.SerializeToString(&response_serialized);
     
@@ -153,7 +175,7 @@ int init () {
     // Bind the ip address and port to a socket
     sockaddr_in hint;
     hint.sin_family = AF_INET;
-    hint.sin_port = htons(54002);
+    hint.sin_port = htons(54003);
     inet_pton(AF_INET, "0.0.0.0", &hint.sin_addr);
  
     bind(listening, (sockaddr*)&hint, sizeof(hint));
@@ -165,8 +187,8 @@ int init () {
 
 
 void* clientConnection (void *args){
-    struct userInformation *user = (struct userInformation*) args;
-    struct userInformation userUpdated;
+    userInformation user = (userInformation*) args;
+    userInformation userUpdated;
     chat::ServerResponse response;
     int clientSocket = user -> socket;
     sockaddr_in client = user -> client;
@@ -195,7 +217,7 @@ void* clientConnection (void *args){
     initrequest.ParseFromString(bufClient);
     userUpdated.name = initrequest.newuser().username();
     userUpdated.ip = initrequest.newuser().ip();
-    userUpdated.socket = user -> socket;
+    userUpdated.socket = user -> socket+0;
     userUpdated.client = user -> client;
     userUpdated.status = "Online";
     userList.push_back(userUpdated);
@@ -222,14 +244,15 @@ void* clientConnection (void *args){
         if (initrequest.option() == chat::ClientRequest_Option_CONNECTED_USERS){
             cout << "Se escogio la opcion CONNECTED_USERS" << endl;
         } else if (initrequest.option() == chat::ClientRequest_Option_USER_INFORMATION){
-            cout << "Se escogio la opcion USER_INFORMATION" << endl;
-            getUser(initrequest.user().user().c_str(), user -> socket);
+            cout << "Se escogio la opcion USER_INFORMATION" << endl; //half done
+            getUser(initrequest.user().user().c_str(), userUpdated.socket); //userupdated.socket si funciona
 
 
         } else if (initrequest.option() == chat::ClientRequest_Option_STATUS_CHANGE){
             cout << "Se escogio la opcion STATUS_CHANGE" << endl;
             changeStatus(initrequest.status().username(), initrequest.status().status());
         } else if (initrequest.option() == chat::ClientRequest_Option_SEND_MESSAGE){
+
             cout << "Se escogio la opcion SEND_MESSAGE" << endl;
             messageChat(initrequest);
         }
@@ -241,18 +264,25 @@ int main()
     
     // Wait for a connection
     int listening = init();
+    int number = 2;
+    int rc;
+    pthread_t tid;
+    pthread_attr_t attrs;
+    pthread_attr_init(&attrs);
     sockaddr_in client;
     socklen_t clientSize = sizeof(client);
     string userInput;
-    userInformation user;
-    int number = 2;
-    int rc;
+    
     while (run){
+        
         int clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
+        userInformation user;
         user.socket = clientSocket;
         user.client = client;
-        pthread_create(&tid, NULL, clientConnection,(void *)&user);
-        cout << "Se ha conectado un nuevo usuario" << endl;
+
+
+        pthread_create(&tid, &attrs, clientConnection,(void *)&user);
+        cout << "Se ha conectado un nuevo usuario " << clientSocket << endl;
     }
  
     return 0;
