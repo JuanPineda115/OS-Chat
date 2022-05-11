@@ -187,7 +187,7 @@ int init () {
 
 
 void* clientConnection (void *args){
-    userInformation user = (userInformation*) args;
+    userInformation *user = (userInformation*) args;
     userInformation userUpdated;
     chat::ServerResponse response;
     int clientSocket = user -> socket;
@@ -272,16 +272,15 @@ int main()
     sockaddr_in client;
     socklen_t clientSize = sizeof(client);
     string userInput;
-    
+    auto* user = (userInformation *) malloc(sizeof(userInformation));
     while (run){
         
         int clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
-        userInformation user;
-        user.socket = clientSocket;
-        user.client = client;
+        user-> socket = clientSocket;
+        user-> client = client;
 
 
-        pthread_create(&tid, &attrs, clientConnection,(void *)&user);
+        pthread_create(&tid, &attrs, clientConnection,(void *)user);
         cout << "Se ha conectado un nuevo usuario " << clientSocket << endl;
     }
  
