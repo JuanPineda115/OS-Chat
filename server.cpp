@@ -146,16 +146,17 @@ void getUser(string user, int sock){
     strcpy(buf, response_serialized.c_str());
     send(sock, buf, response_serialized.size()+1, 0);
 }
-
-void getConnectedUser(int sock){
+void getConnectedUser2(int sock){
     chat::ServerResponse response;
     chat::ConnectedUsers *connectedUsers = response.mutable_users();
     char buf[4096];
     for (int i = 0; i < userList.size(); i++){
-        chat::UserInformation *userRequest = connectedUsers -> add_users();
-        userRequest->set_username(userList[i].name);
-        userRequest->set_ip(userList[i].ip);
-        userRequest->set_status(userList[i].status);
+        if (userList[i].status == "Online"){
+            chat::UserInformation *userRequest = connectedUsers -> add_users();
+            userRequest->set_username(userList[i].name);
+            userRequest->set_ip(userList[i].ip);
+            userRequest->set_status(userList[i].status);
+        }
     }
 
     response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
@@ -167,6 +168,31 @@ void getConnectedUser(int sock){
     strcpy(buf, response_serialized.c_str());
     send(sock, buf, response_serialized.size()+1, 0);
 }
+
+/* void getConnectedUser(int sock){
+    chat::ServerResponse response;
+    chat::ClientRequest request;
+    std::string response_serialized;
+    char buf[4096];
+    chat::ConnectedUsers *allUsers = new chat::ConnectedUsers();
+    //obtener todos los usuarios que estan conectados
+    for (auto item = userList.begin(); item!=userList.end(); item++){
+        chat::UserInformation * user = allUsers->add_users();
+        if(item->second.status == "Online"){
+            user->set_username(item->name);
+            user->set_ip(item->ip);
+            user->set_status(item->status);
+        }
+    }
+    //enviar la respuesta
+    response.Clear();
+    response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
+    response.set_option(response.CONNECTED_USERS);
+    response.set_allocated_users(allUsers);
+    response.SerializeToString(&response_serialized);
+    strcpy(buf, response_serialized.c_str());
+    send(sock, buf, response_serialized.size() + 1, 0);
+} */
 void changeStatus(string name, string status){
     //chat::ClientRequest request;
     chat::ServerResponse response;
@@ -202,7 +228,7 @@ int init () {
     // Bind the ip address and port to a socket
     sockaddr_in hint;
     hint.sin_family = AF_INET;
-    hint.sin_port = htons(54005);
+    hint.sin_port = htons(54006);
     inet_pton(AF_INET, "0.0.0.0", &hint.sin_addr);
  
     bind(listening, (sockaddr*)&hint, sizeof(hint));
@@ -271,6 +297,7 @@ void* clientConnection (void *args){
         cout << initrequest.option() << endl;
         if (initrequest.option() == chat::ClientRequest_Option_CONNECTED_USERS){
             cout << "Se escogio la opcion CONNECTED_USERS" << endl;
+            getConnectedUser2(clientSocket);
         } else if (initrequest.option() == chat::ClientRequest_Option_USER_INFORMATION){
             cout << "Se escogio la opcion USER_INFORMATION" << endl; //half done
             getUser(initrequest.user().user().c_str(), clientSocket); //userupdated.socket si funciona

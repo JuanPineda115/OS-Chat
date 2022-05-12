@@ -1,3 +1,11 @@
+/* Universidad del Valle de Guatemala
+Sistemas operativos
+Proyecto: Chat
+Por:
+Orlando Cabrera
+Jose Javier Hurtarte
+Juan Pablo Pineda */
+
 #include <iostream>
 #include <sys/types.h> 
 #include <unistd.h>
@@ -99,10 +107,17 @@ void *listenToServer(void *args)
                 }
                 
                 
+            } else if(response.option() == chat::ServerResponse_Option_CONNECTED_USERS)
+            {
+                int size = response.users().users_size();
+                
+                for(int i = 0; i<size; i++){
+                    chat::UserInformation user = response.users().users(i);
+                    cout << "Username: " << user.username().c_str() << endl;
+                    cout << "IP: " << user.ip().c_str() << endl;
+                    cout << "Estado: : " << user.status().c_str() << endl;
+                }
             }
-
-
-
     }
 }
 void help(){
@@ -137,7 +152,7 @@ int main()
         return 1;
     }
     //	Create a hint structure for the server we're connecting with
-    int port = 54005;
+    int port = 54006;
     string ipAddress = "127.0.0.1";
 
     sockaddr_in hint;
@@ -265,8 +280,6 @@ int main()
             
 
             //  Send the request to server
-            // chat::ClientRequest *allUsers = new chat::ClientRequest;
-            // allUsers->set_option(chat::ClientRequest_Option_CONNECTED_USERS);
             std::string request_serial;
             server->SerializeToString(&request_serial);
             strcpy(buf, request_serial.c_str());
