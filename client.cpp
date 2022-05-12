@@ -81,13 +81,18 @@ void *listenToServer(void *args)
                 }
                 else
                 {
-                    if(response.messg().receiver().c_str() == "all"){
+                    string mensaje_recibido = response.messg().text().c_str();
+                    string sender_mensaje = response.messg().sender().c_str();
+
+                    cout<<response.DebugString()<<endl;
+                    if(response.messg().receiver() == "all"){
                         printf("\n%s@general: %s\n", response.messg().sender().c_str(), response.messg().text().c_str());
-                        chat_history.push_back(response.messg().sender().c_str()+"@general: "+response.messg().text().c_str());
+                        //chat_history.push_back(str(response.messg().sender().c_str())+"@general: "+str(response.messg().text().c_str()));
 
                     }else{
                         printf("\n%s@private: %s\n", response.messg().sender().c_str(), response.messg().text().c_str());
-                        chat_history.push_back(response.messg().sender().c_str()+"@general: "+response.messg().text().c_str());
+                            //chat_history.push_back(str(response.messg().sender().c_str())+"@private: "+str(response.messg().text().c_str()));
+
                     
                     }
                    
@@ -114,16 +119,6 @@ void showMenu()
     printf( "7. Salir\r\n");
 }
 
-void ListUsers(const chat::ConnectedUsers& connectedUsers){
-    for (int i=0; i<connectedUsers.users_size(); i++){
-        const chat::UserInformation& userinfo = connectedUsers.users(i);
-        cout << "Username: " << userinfo.username() << endl;
-        cout << "IP: " << userinfo.ip() << endl;
-        cout << "Estado: : " << userinfo.status() << endl;
-    }
-}
-
-
 int main()
 {
     //	Create a socket
@@ -133,7 +128,7 @@ int main()
         return 1;
     }
     //	Create a hint structure for the server we're connecting with
-    int port = 54003;
+    int port = 54005;
     string ipAddress = "127.0.0.1";
 
     sockaddr_in hint;
@@ -255,27 +250,34 @@ int main()
 
         if(userInput == "1"){
             //  Send the request to server
-            chat::ClientRequest *allUsers = new chat::ClientRequest;
-            allUsers->set_option(chat::ClientRequest_Option_CONNECTED_USERS);
-            std::string request_serial;
-            allUsers->SerializeToString(&request_serial);
-            strcpy(buf, request_serial.c_str());
-            send(sock, request_serial.c_str(), request_serial.size(), 0);
+            // chat::ClientRequest *allUsers = new chat::ClientRequest;
+            // allUsers->set_option(chat::ClientRequest_Option_CONNECTED_USERS);
+            // std::string request_serial;
+            // allUsers->SerializeToString(&request_serial);
+            // strcpy(buf, request_serial.c_str());
+            // send(sock, request_serial.c_str(), request_serial.size(), 0);
             
-            //  Recieve response
-            recv(sock, buf, 4096, 0);
-            chat::ServerResponse respuesta;
-            respuesta.ParseFromString(buf);
-            cout << respuesta.DebugString() << '\n';
-            if(respuesta.code() != chat::ServerResponse_Code_FAILED_OPERATION){
-                //  Print the users
-                printf("Usuarios conectados en el servidor: \n");
-                chat::ConnectedUsers activeUsers = respuesta.users();
-                ListUsers(activeUsers);
-            }
-            else{
-                printf("Error en el servidor. \n");
-            }
+            // //  Recieve response
+            // recv(sock, buf, 4096, 0);
+            // chat::ServerResponse respuesta;
+            // respuesta.ParseFromString(buf);
+            // cout << respuesta.DebugString() << '\n';
+            // if (respuesta.code() != chat::ServerResponse_Code_FAILED_OPERATION)
+            // {
+            //     //  Print the users
+            //     printf("Usuarios conectados en el servidor: \n");
+            //     int size = response.users().users().size();
+            //     for(int i = 0; i<size; i++){
+            //         auto user = response.users().users(i)
+            //         cout << "Username: " << user.username().c_str() << endl;
+            //         cout << "IP: " << user.ip().c_str() << endl;
+            //         cout << "Estado: : " << user.status().c_str() << endl;
+            //     }
+            // }
+            // else
+            // {
+            //     printf("Error en el servidor. \n");
+            // }
 
         }        
         else if(userInput == "2"){
@@ -389,8 +391,9 @@ int main()
 
         else if(userInput == "5"){
             int sizevec = chat_history.size();
-            for (int i = 0; i < sizevec ; i++)
-            std::cout << chat_history[i] << "\n";
+            for (int i = 0; i < sizevec ; i++){
+                std::cout << chat_history[i] << "\n";
+            }
         }
         
     } while(userInput != "7");
