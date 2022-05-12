@@ -1,8 +1,8 @@
 client: client_exe
-	./client_exe
+	./client_exe 127.0.0.1 54000
 
 server: server_exe
-	./server_exe
+	./server_exe 54000
 
 clean:
 	rm client_exe

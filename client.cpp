@@ -143,8 +143,20 @@ void showMenu()
     printf( "7. Salir\r\n");
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+
+    //make the first argument be a string called hostname
+    char *ipadress_arg = argv[1];
+    //store hostname in a string
+    //string hostname_str = ipadress_arg;
+
+    string ipAddress = ipadress_arg;
+    //string ipAddress = "127.0.0.1";
+
+    //make the second argument be a int called port
+    int port = atoi(argv[2]);
+    //int port = 54000;
     //	Create a socket
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
@@ -152,8 +164,8 @@ int main()
         return 1;
     }
     //	Create a hint structure for the server we're connecting with
-    int port = 54006;
-    string ipAddress = "127.0.0.1";
+    
+    
 
     sockaddr_in hint;
     hint.sin_family = AF_INET;

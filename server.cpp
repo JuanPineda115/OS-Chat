@@ -31,6 +31,8 @@ struct userInformation
 
 std::vector<userInformation> userList;
 bool run = true;
+string ipAddressInput;
+int portInput;
 
 // Esta funcion servira para cuando querramos buscar un usuario especifico dentro de la lista de usuarios
 int findUser(string name){
@@ -224,11 +226,11 @@ int init () {
         cerr << "Can't create a socket! Quitting" << endl;
         return 0;
     }
- 
+    
     // Bind the ip address and port to a socket
     sockaddr_in hint;
     hint.sin_family = AF_INET;
-    hint.sin_port = htons(54006);
+    hint.sin_port = htons(portInput);
     inet_pton(AF_INET, "0.0.0.0", &hint.sin_addr);
  
     bind(listening, (sockaddr*)&hint, sizeof(hint));
@@ -316,9 +318,13 @@ void* clientConnection (void *args){
     pthread_exit(nullptr);
 }   
 
-int main()
+int main(int argc, char  *argv[]) 
 {
     
+
+
+    portInput = atoi(argv[1]);
+
     // Wait for a connection
     int listening = init();
     int number = 2;
