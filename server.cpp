@@ -257,6 +257,7 @@ void* clientConnection (void *args){
             response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
         } else {
             response.set_code(chat::ServerResponse_Code_FAILED_OPERATION);
+            break;
         }
         std::string response_serialized; 
         response.SerializeToString(&response_serialized);
@@ -284,6 +285,8 @@ void* clientConnection (void *args){
             messageChat(initrequest);
         }
     }
+    close(userUpdated.socket);
+    pthread_exit(nullptr);
 }   
 
 int main()
