@@ -105,6 +105,15 @@ void *listenToServer(void *args)
 
     }
 }
+void help(){
+    printf("\n\n\n");
+    printf( "1. Obtener usuarios conectados -> Mostrar una lista con todos los usuarios conectados\r\n");
+    printf( "2. Mostrar información de un usuario -> Mostrar el estado, ip y el nombre de un usuario colocando su nombre\r\n");
+    printf( "3. Cambiar estatus -> Cambia el estado de tu cuenta: Online u Offline\r\n");
+    printf( "4. Enviar un mensaje general -> Envia un mensaje a todos los usuarios conectados\r\n");
+    printf( "5. Enviar un mensaje directo -> Envia un mensaje a un usuario en especifico colocando su nombre\n");
+    printf( "7. Salir -> Desconectarse del servidor\r\n");
+}
 
 void showMenu()
 {
@@ -249,13 +258,19 @@ int main()
         */
 
         if(userInput == "1"){
+
+            
+            chat::ClientRequest *server = new chat::ClientRequest();
+            server->set_option(chat::ClientRequest_Option_CONNECTED_USERS);
+            
+
             //  Send the request to server
             // chat::ClientRequest *allUsers = new chat::ClientRequest;
             // allUsers->set_option(chat::ClientRequest_Option_CONNECTED_USERS);
-            // std::string request_serial;
-            // allUsers->SerializeToString(&request_serial);
-            // strcpy(buf, request_serial.c_str());
-            // send(sock, request_serial.c_str(), request_serial.size(), 0);
+            std::string request_serial;
+            server->SerializeToString(&request_serial);
+            strcpy(buf, request_serial.c_str());
+            send(sock, buf, request_serial.size()+1, 0);
             
             // //  Recieve response
             // recv(sock, buf, 4096, 0);
@@ -389,11 +404,8 @@ int main()
 
         }
 
-        else if(userInput == "5"){
-            int sizevec = chat_history.size();
-            for (int i = 0; i < sizevec ; i++){
-                std::cout << chat_history[i] << "\n";
-            }
+        else if(userInput == "help"){
+            help();
         }
         
     } while(userInput != "7");
