@@ -42,14 +42,6 @@ void *listenToServer(void *args)
             int bytesReceived = recv(*sock_con, response_buffer, 4096, 0);
 
             response.ParseFromString(response_buffer);
-
-            // switch (response.option()) {
-            
-            // case chat::ServerResponse_Option_STATUS_CHANGE:
-            //     std::cout << "El usuario " << std::endl;
-            //     break;
-            // }
-            //TODO: Connected users
             if(response.option() == chat::ServerResponse_Option_USER_INFORMATION)
             {
                 if(response.code() == chat::ServerResponse_Code_FAILED_OPERATION)
@@ -95,13 +87,8 @@ void *listenToServer(void *args)
                     cout<<response.DebugString()<<endl;
                     if(response.messg().receiver() == "all"){
                         printf("\n%s@general: %s\n", response.messg().sender().c_str(), response.messg().text().c_str());
-                        //chat_history.push_back(str(response.messg().sender().c_str())+"@general: "+str(response.messg().text().c_str()));
-
                     }else{
                         printf("\n%s@private: %s\n", response.messg().sender().c_str(), response.messg().text().c_str());
-                            //chat_history.push_back(str(response.messg().sender().c_str())+"@private: "+str(response.messg().text().c_str()));
-
-                    
                     }
                    
                 }
@@ -133,7 +120,7 @@ void help(){
 void showMenu()
 {
     printf("\n\n\n");
-    printf( "Welcome to the chat room!\r\n");
+    printf( "Bienvenido al chat\r\n");
     printf( "1. Obtener usuarios conectados\r\n");
     printf( "2. Mostrar información de un usuario\r\n");
     printf( "3. Cambiar estatus\r\n");
@@ -146,25 +133,16 @@ void showMenu()
 int main(int argc, char *argv[])
 {
 
-    //make the first argument be a string called hostname
     char *ipadress_arg = argv[1];
-    //store hostname in a string
-    //string hostname_str = ipadress_arg;
 
     string ipAddress = ipadress_arg;
-    //string ipAddress = "127.0.0.1";
 
-    //make the second argument be a int called port
     int port = atoi(argv[2]);
-    //int port = 54000;
-    //	Create a socket
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
     {
         return 1;
-    }
-    //	Create a hint structure for the server we're connecting with
-    
+    } 
     
 
     sockaddr_in hint;
@@ -219,8 +197,7 @@ int main(int argc, char *argv[])
     chat::UserRegistration* user = setUsername.mutable_newuser();
     user->set_username(name);
     user->set_ip(ip);
-    // setUsername.mutable_newuser() ->set_username(name);
-    // setUsername.mutable_newuser() ->set_ip("127.1.1.1");
+
 
     std::string login_serialized; 
     setUsername.SerializeToString(&login_serialized);

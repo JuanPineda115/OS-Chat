@@ -16,6 +16,9 @@ Juan Pablo Pineda */
 #include <pthread.h>
 #include "register.pb.h"
 #include <stdio.h>
+#include <ctime>
+
+#define IDLE_TIME 30
 
 
 using namespace std;
@@ -27,12 +30,15 @@ struct userInformation
         string ip;
         string status;
         sockaddr_in client;
+        time_t now;
     };
 
 std::vector<userInformation> userList;
 bool run = true;
+
 string ipAddressInput;
 int portInput;
+time_t curr_time;
 
 // Esta funcion servira para cuando querramos buscar un usuario especifico dentro de la lista de usuarios
 int findUser(string name){
@@ -45,10 +51,8 @@ int findUser(string name){
 // user -> Usuario que envia el mensaje
 // name -> Usuario que recibe el mensaje
 // text -> El mensaje que se envio
-// TODO probar
 void privateChat(string user, string name, string text){
     chat::ServerResponse response;
-    //chat::ClientRequest request;
     chat::Message *message = response.mutable_messg(); 
     char buf[4096];
     int sock_dest = userList[findUser(name)].socket;
@@ -68,14 +72,10 @@ void privateChat(string user, string name, string text){
 }
 // user -> Usuario que envia el mensaje
 // text -> El mensaje que se envio
-// TODO probar
 void generalChat(string user, string text){
     
     for (int i = 0; i < userList.size(); i++){
         chat::ServerResponse response;
-        //chat::ClientRequest request;
-        //chat::Message *message = response.mutable_messg();
-        //std::string response_serialized; 
         int sock;
         response.mutable_messg() -> set_sender(user);
         response.mutable_messg() -> set_text(text);
@@ -83,7 +83,6 @@ void generalChat(string user, string text){
         response.set_option(chat::ServerResponse_Option_SEND_MESSAGE);
         response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
         char buf[4096];
-        //userList[i].name
 
         cout<<"USUarios en general"<<userList[i].name<<endl;
         sock = userList[i].socket;
@@ -94,7 +93,6 @@ void generalChat(string user, string text){
         send(sock, buf, response_serialized.size()+1, 0);
     }
 }
-// TODO probar
 // user -> Usuario a quien se le envia el mensaje (all es para todos los usurios)
 // name -> Usuario quien envio el mensaje
 // text -> Mensaje
@@ -105,33 +103,8 @@ void messageChat (chat::ClientRequest request){
         privateChat(request.messg().sender(),request.messg().receiver(), request.messg().text());
     }
 }
-// TODO
-// void connectedUsers(int sock){
-//     chat::ServerResponse response;
-//     chat::ClientRequest request;
-//     std::string response_serialized;
-//     char buf[4096];
-// if(request.user().has_user() != true){
-//         response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
-//         chat::ConnectedUsers *allUsers = new chat::ConnectedUsers();
-//         for (auto item = userList.begin(); item!=userList.end(); item++){
-//             chat::UserInformation * user = allUsers->add_users();
-//             user->set_username(item->name);
-//             user->set_ip(item->ip);
-//             user->set_status(item->status);
-//         }
-//         response.Clear();
-//         response.set_option(response.CONNECTED_USERS);
-//         response.set_allocated_users(allUsers);
-//         response.SerializeToString(&response_serialized);
-//         strcpy(buf, response_serialized.c_str());
-//         send(sock, buf, response_serialized.size() + 1, 0);
-//     }
-// }
-// user -> Usuario a quien buscar
-// sock -> Socket del usuario que hizo la peticion
+
 void getUser(string user, int sock){
-    //chat::ClientRequest request;
     chat::ServerResponse response;
     chat::UserInformation *userRequest = response.mutable_user();
     char buf[4096];
@@ -139,6 +112,10 @@ void getUser(string user, int sock){
     userRequest -> set_username(information.name);
     userRequest -> set_ip(information.ip);
     userRequest -> set_status(information.status);
+    if (difftime(time(NULL),information.now) > IDLE_TIME){
+        userRequest -> set_status("Inactivo");
+    }
+    //cout << difftime(time(NULL),information.now)<<  endl;
     response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
     response.set_option(chat::ServerResponse_Option_USER_INFORMATION);
 
@@ -171,34 +148,8 @@ void getConnectedUser2(int sock){
     send(sock, buf, response_serialized.size()+1, 0);
 }
 
-/* void getConnectedUser(int sock){
-    chat::ServerResponse response;
-    chat::ClientRequest request;
-    std::string response_serialized;
-    char buf[4096];
-    chat::ConnectedUsers *allUsers = new chat::ConnectedUsers();
-    //obtener todos los usuarios que estan conectados
-    for (auto item = userList.begin(); item!=userList.end(); item++){
-        chat::UserInformation * user = allUsers->add_users();
-        if(item->second.status == "Online"){
-            user->set_username(item->name);
-            user->set_ip(item->ip);
-            user->set_status(item->status);
-        }
-    }
-    //enviar la respuesta
-    response.Clear();
-    response.set_code(chat::ServerResponse_Code_SUCCESSFUL_OPERATION);
-    response.set_option(response.CONNECTED_USERS);
-    response.set_allocated_users(allUsers);
-    response.SerializeToString(&response_serialized);
-    strcpy(buf, response_serialized.c_str());
-    send(sock, buf, response_serialized.size() + 1, 0);
-} */
 void changeStatus(string name, string status){
-    //chat::ClientRequest request;
     chat::ServerResponse response;
-    //chat::ChangeStatus *estado = response.mutable_status();
     char buf[4096];
     int sock = userList[findUser(name)].socket;
     response.mutable_status() -> set_status(status.c_str());
@@ -214,7 +165,6 @@ void changeStatus(string name, string status){
 
     std::string response_serialized; 
     response.SerializeToString(&response_serialized);
-    //cout << userList[0].name << endl;
     strcpy(buf, response_serialized.c_str());
     send(sock, buf, response_serialized.size()+1, 0);
 }
@@ -244,6 +194,8 @@ int init () {
 void* clientConnection (void *args){
     userInformation *user = (userInformation*) args;
     userInformation userUpdated;
+    time_t curr_time = std::time(0);   // get time now
+
     chat::ServerResponse response;
     int clientSocket = user -> socket;
     sockaddr_in client = user -> client;
@@ -272,9 +224,14 @@ void* clientConnection (void *args){
     initrequest.ParseFromString(bufClient);
     userUpdated.name = initrequest.newuser().username();
     userUpdated.ip = initrequest.newuser().ip();
-    userUpdated.socket = clientSocket;//(user -> socket)+0;
+    userUpdated.socket = clientSocket;
     userUpdated.client = user -> client;
     userUpdated.status = "Online";
+    userUpdated.now = time(NULL);
+    //time_t curr_time2;
+	//curr_time2 = time(NULL);
+    //cout << "Se conecto a las " << difftime(time(NULL), curr_time)<< endl;
+
     userList.push_back(userUpdated);
     std::string response_serialized; 
     response.SerializeToString(&response_serialized);
@@ -287,6 +244,7 @@ void* clientConnection (void *args){
             response.set_code(chat::ServerResponse_Code_FAILED_OPERATION);
             break;
         }
+        userList[findUser(userUpdated.name)].now = time(NULL);
         std::string response_serialized; 
         response.SerializeToString(&response_serialized);
         strcpy(bufClient, response_serialized.c_str());
@@ -315,15 +273,18 @@ void* clientConnection (void *args){
         }
     }
     close(userUpdated.socket);
+    userList.erase(userList.begin() + findUser(userUpdated.name));
+    cout << userUpdated.name <<" Se ha desconectado" << endl;
     pthread_exit(nullptr);
 }   
 
 int main(int argc, char  *argv[]) 
 {
-    
-
-
     portInput = atoi(argv[1]);
+	curr_time = time(NULL);
+
+	char *tm = ctime(&curr_time);
+	cout << "Today is : " << tm << endl;
 
     // Wait for a connection
     int listening = init();
