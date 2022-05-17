@@ -23,14 +23,6 @@ using namespace std;
 int sock;
 std::vector<std::string> chat_history;
 
-/**
-if(loginresponse.code() == chat::ServerResponse_Code_FAILED_OPERATION)
-    {
-        printf("No se pudo iniciar sesion\n");
-        return 1;
-    } 
- */
-
 void *listenToServer(void *args)
 {
     while(1){
@@ -176,7 +168,6 @@ int main(int argc, char *argv[])
     //para opcion 5
     string direct_message, direct_user;
 
-    //TODO: Hacer que el primer argumento sea el usuario
     string name;
     cout << "Ingrese su nombre de usuario" << endl;
     cin >> name;

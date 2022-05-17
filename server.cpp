@@ -135,6 +135,9 @@ void getConnectedUser2(int sock){
             userRequest->set_username(userList[i].name);
             userRequest->set_ip(userList[i].ip);
             userRequest->set_status(userList[i].status);
+            if (difftime(time(NULL),userList[i].now) > IDLE_TIME){
+                userRequest -> set_status("Inactivo");
+            }
         }
     }
 
