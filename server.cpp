@@ -228,9 +228,6 @@ void* clientConnection (void *args){
     userUpdated.client = user -> client;
     userUpdated.status = "Online";
     userUpdated.now = time(NULL);
-    //time_t curr_time2;
-	//curr_time2 = time(NULL);
-    //cout << "Se conecto a las " << difftime(time(NULL), curr_time)<< endl;
 
     userList.push_back(userUpdated);
     std::string response_serialized; 
@@ -256,19 +253,19 @@ void* clientConnection (void *args){
 
         cout << initrequest.option() << endl;
         if (initrequest.option() == chat::ClientRequest_Option_CONNECTED_USERS){
-            cout << "Se escogio la opcion CONNECTED_USERS" << endl;
+            cout << "Se escogio la opcion CONNECTED_USERS por " << userUpdated.name<< endl;
             getConnectedUser2(clientSocket);
         } else if (initrequest.option() == chat::ClientRequest_Option_USER_INFORMATION){
-            cout << "Se escogio la opcion USER_INFORMATION" << endl; //half done
+            cout << "Se escogio la opcion USER_INFORMATION por " << userUpdated.name<< endl; //half done
             getUser(initrequest.user().user().c_str(), clientSocket); //userupdated.socket si funciona
 
 
         } else if (initrequest.option() == chat::ClientRequest_Option_STATUS_CHANGE){
-            cout << "Se escogio la opcion STATUS_CHANGE" << endl;
+            cout << "Se escogio la opcion STATUS_CHANGE por " << userUpdated.name<< endl;
             changeStatus(initrequest.status().username(), initrequest.status().status());
         } else if (initrequest.option() == chat::ClientRequest_Option_SEND_MESSAGE){
 
-            cout << "Se escogio la opcion SEND_MESSAGE" << endl;
+            cout << "Se escogio la opcion SEND_MESSAGE por " << userUpdated.name<< endl;
             messageChat(initrequest);
         }
     }

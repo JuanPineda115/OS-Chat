@@ -229,41 +229,14 @@ int main(int argc, char *argv[])
 
     do {
         //		Enter lines of text
-        cin.ignore();
+        //cin.ignore();
+        usleep(1000);
         showMenu();
         cout << "> ";
         getline(cin, userInput);
-
-        //		Send to server
-        // int sendRes = send(sock, userInput.c_str(), userInput.size() + 1, 0);
-        // if (sendRes == -1)
-        // {
-        //     cout << "Could not send to server! Whoops!\r\n";
-        //     continue;
-        // }
-
-        // //		Wait for response
-        // memset(buf, 0, 4096);
-        // int bytesReceived = recv(sock, buf, 4096, 0);
-        // if (bytesReceived == -1)
-        // {
-        //     cout << "There was an error getting response from server\r\n";
-        // }
-        // else
-        // {
-        //     //		Display response
-        //     cout << "SERVER> " << string(buf, bytesReceived) << "\r\n";
-        // }
-        /*
-        switch userInput:
-            case 1:
-                chat::ConnectedUsers& actives;
-                
-        */
-
+        cout << "Opcion escogida" <<userInput << endl;
+        cout << "> ";
         if(userInput == "1"){
-
-            
             chat::ClientRequest *server = new chat::ClientRequest();
             server->set_option(chat::ClientRequest_Option_CONNECTED_USERS);
             
@@ -273,29 +246,6 @@ int main(int argc, char *argv[])
             server->SerializeToString(&request_serial);
             strcpy(buf, request_serial.c_str());
             send(sock, buf, request_serial.size()+1, 0);
-            
-            // //  Recieve response
-            // recv(sock, buf, 4096, 0);
-            // chat::ServerResponse respuesta;
-            // respuesta.ParseFromString(buf);
-            // cout << respuesta.DebugString() << '\n';
-            // if (respuesta.code() != chat::ServerResponse_Code_FAILED_OPERATION)
-            // {
-            //     //  Print the users
-            //     printf("Usuarios conectados en el servidor: \n");
-            //     int size = response.users().users().size();
-            //     for(int i = 0; i<size; i++){
-            //         auto user = response.users().users(i)
-            //         cout << "Username: " << user.username().c_str() << endl;
-            //         cout << "IP: " << user.ip().c_str() << endl;
-            //         cout << "Estado: : " << user.status().c_str() << endl;
-            //     }
-            // }
-            // else
-            // {
-            //     printf("Error en el servidor. \n");
-            // }
-
         }        
         else if(userInput == "2"){
             user_info="";
@@ -309,9 +259,6 @@ int main(int argc, char *argv[])
             server->SerializeToString(&serialized);
             strcpy(buf, serialized.c_str());
             send(sock, buf, serialized.size()+1, 0);
-
-            
-            
         }              
         else if(userInput == "3"){
 
@@ -341,19 +288,6 @@ int main(int argc, char *argv[])
                 strcpy(buf, serialized.c_str());
                 send(sock, buf, serialized.size()+1, 0);
 
-                // recv(sock, buf, 4096, 0);
-                // chat::ServerResponse response;
-                // response.ParseFromString(buf);
-                // if(response.code() != chat::ServerResponse_Code_FAILED_OPERATION)
-                // {
-                //     printf("No se pudo cambiar el estado! \n");
-                //     return 1;
-                // }
-                // else
-                // {
-                //     printf("Estado actualizado correctamente!\n");
-                // }
-                
                 
 
 
@@ -409,6 +343,7 @@ int main(int argc, char *argv[])
         else if(userInput == "help"){
             help();
         }
+
         
     } while(userInput != "7");
 
